@@ -29,8 +29,32 @@
   "syntax/02MyToken.sol": {
     "__sources__": {
       "syntax/02MyToken.sol": {
-        "content": "// Solidity 核心语法速览\r\n\r\n// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.20;  // 指定编译器版本\r\n\r\ncontract MyToken {\r\n    // 状态变量（存储在 Storage，永久保存，写入贵！）\r\n    string public name = \"MyToken\";\r\n    uint256 public totalSupply;\r\n    \r\n    // mapping：类似 Java 的 HashMap<address, uint256>\r\n    mapping(address => uint256) public balanceOf;\r\n    \r\n    // 事件：写入日志，比写 Storage 便宜 10 倍\r\n    event Transfer(address indexed from, address indexed to, uint256 value);\r\n    \r\n    // constructor：只在部署时执行一次\r\n    constructor(uint256 _initialSupply) {\r\n        totalSupply = _initialSupply;\r\n        balanceOf[msg.sender] = _initialSupply;  // msg.sender = 部署者地址\r\n    }\r\n    \r\n    // 函数修饰符\r\n    // public   = 外部和内部都能调用\r\n    // private  = 只有合约内部\r\n    // internal = 合约内部 + 继承合约\r\n    // external = 只有外部调用\r\n    // view     = 不修改状态（免费 call，不消耗 Gas）\r\n    // pure     = 不读不写状态\r\n    \r\n    function transfer(address _to, uint256 _amount) public returns (bool) {\r\n        require(balanceOf[msg.sender] >= _amount, \"Insufficient balance\");\r\n        balanceOf[msg.sender] -= _amount;\r\n        balanceOf[_to] += _amount;\r\n        emit Transfer(msg.sender, _to, _amount);  // 发出事件，记录日志\r\n        return true;\r\n    }\r\n}",
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.20;\r\n\r\ncontract MyToken {\r\n    string public name = \"MyToken\";\r\n    uint256 public totalSupply;\r\n    mapping(address => uint256) public balanceOf;\r\n    uint256 public count; // 复用现有的计数器\r\n\r\n    event Transfer(address indexed from, address indexed to, uint256 value);\r\n    event Increment(address user, uint256 value); // 复用现有的事件\r\n\r\n    constructor(uint256 _initialSupply) {\r\n        totalSupply = _initialSupply;\r\n        balanceOf[msg.sender] = _initialSupply;\r\n    }\r\n\r\n    // 保留原有的 increment 方法（可选）\r\n    function increment() public {\r\n        count += 1;\r\n        emit Increment(msg.sender, 1);\r\n    }\r\n\r\n    // 修改 transfer 方法，集成计数器\r\n    function transfer(address _to, uint256 _amount) public returns (bool) {\r\n        require(balanceOf[msg.sender] >= _amount, \"Insufficient balance.\");\r\n        balanceOf[msg.sender] -= _amount;\r\n        balanceOf[_to] += _amount;\r\n        emit Transfer(msg.sender, _to, _amount);\r\n        return true;\r\n    }\r\n}",
         "file": "syntax/02MyToken.sol"
+      }
+    }
+  },
+  "syntax/03ECO20.sol": {
+    "__sources__": {
+      "syntax/03ECO20.sol": {
+        "content": "interface IERC20 {\r\n    // 查询类（view，免费）\r\n    function totalSupply() external view returns (uint256);\r\n    function balanceOf(address account) external view returns (uint256);\r\n    function allowance(address owner, address spender) external view returns (uint256);\r\n    \r\n    // 写操作（需要发交易，消耗 Gas）\r\n    function transfer(address to, uint256 amount) external returns (bool);\r\n    function approve(address spender, uint256 amount) external returns (bool);\r\n    function transferFrom(address from, address to, uint256 amount) external returns (bool);\r\n    \r\n    // 事件（转账和授权时必须 emit）\r\n    event Transfer(address indexed from, address indexed to, uint256 value);\r\n    event Approval(address indexed owner, address indexed spender, uint256 value);\r\n}",
+        "file": "syntax/03ECO20.sol"
+      }
+    }
+  },
+  "syntax/00IERC20.sol": {
+    "__sources__": {
+      "syntax/00IERC20.sol": {
+        "content": "interface IERC20 {\r\n    // 查询类（view，免费）\r\n    function totalSupply() external view returns (uint256);\r\n    function balanceOf(address account) external view returns (uint256);\r\n    function allowance(address owner, address spender) external view returns (uint256);\r\n    \r\n    // 写操作（需要发交易，消耗 Gas）\r\n    function transfer(address to, uint256 amount) external returns (bool);\r\n    function approve(address spender, uint256 amount) external returns (bool);\r\n    function transferFrom(address from, address to, uint256 amount) external returns (bool);\r\n    \r\n    // 事件（转账和授权时必须 emit）\r\n    event Transfer(address indexed from, address indexed to, uint256 value);\r\n    event Approval(address indexed owner, address indexed spender, uint256 value);\r\n}",
+        "file": "syntax/00IERC20.sol"
+      }
+    }
+  },
+  "syntax/04MyERC20Token.sol": {
+    "__sources__": {
+      "syntax/04MyERC20Token.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.20;\r\n\r\ncontract MyERC20Token {\r\n    string public name;\r\n    string public symbol;\r\n    uint8 public decimals = 18;\r\n    uint256 public totalSupply;\r\n\r\n    mapping (address => uint256) public balanceOf;\r\n    mapping (address =>  mapping(address => uint256)) public allowance;\r\n\r\n    event Transfer(address indexed from, address indexed to, uint256 value);\r\n    event Approval(address indexed owner, address indexed spender, uint256 value);\r\n\r\n    constructor (string memory _name, string memory _symbol, uint256 _initialSupply) {\r\n        name = _name;\r\n        symbol = _symbol;\r\n        totalSupply = _initialSupply * 10 ** uint256(decimals);\r\n        balanceOf[msg.sender] = totalSupply;\r\n        emit Transfer(address(0), msg.sender, totalSupply);\r\n    }\r\n\r\n    function transfer(address to, uint256 amount) public returns (bool) {\r\n        require(to != address(0), \"Transfer to zero address\");\r\n        require(balanceOf[msg.sender] >= amount, \"insufficient balance\");\r\n        balanceOf[msg.sender] -= amount;\r\n        balanceOf[to] += amount;\r\n        emit Transfer(msg.sender, to, amount);\r\n        return true;\r\n    }\r\n    function approve(address spender, uint256 amount) public returns (bool) {\r\n        require(spender != address(0), \"Approve to zero address\");\r\n        allowance[msg.sender][spender] = amount;\r\n        emit Approval(msg.sender, spender, amount);\r\n        return true;\r\n    }\r\n\r\n    function transferFrom(address from, address to, uint256 amount) public returns (bool) {\r\n        require(to != address(0), \"Transfer to zero address\");\r\n        require(balanceOf[from] >= amount, \"Insufficient balance\");\r\n        require(allowance[from][msg.sender] >= amount, \"Insufficient allowance\");\r\n        \r\n        allowance[from][msg.sender] -= amount;\r\n        balanceOf[from] -= amount;\r\n        balanceOf[to] += amount;\r\n        emit Transfer(from, to, amount);\r\n        return true;\r\n    }\r\n}",
+        "file": "syntax/04MyERC20Token.sol"
       }
     }
   }
